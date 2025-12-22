@@ -14,7 +14,8 @@ CBSL_URL = "https://www.cbsl.gov.lk/en/rates-and-indicators/exchange-rates"
 GOLDPRICEZ_URL = "https://goldpricez.com/api/rates"
 GOLDPRICEZ_KEY = os.getenv("GOLDPRICEZ_KEY", "").strip()
 
-OUT_PATH = os.path.join("public", "prices.json")
+OUT_PATH = "prices.json"
+
 
 
 def now_colombo_iso() -> str:
