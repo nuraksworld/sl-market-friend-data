@@ -1,9 +1,59 @@
 {
   "app": "SL Market Friend",
   "tz": "Asia/Colombo",
-  "lastUpdated": "2025-12-23T03:02:31+05:30",
+  "lastUpdated": "2025-12-23T03:08:14+05:30",
+  "sources": {
+    "fuel": "https://ceypetco.gov.lk/marketing-sales/",
+    "fx": "https://www.cbsl.gov.lk/en/rates-and-indicators/exchange-rates",
+    "gold": "https://goldpricez.com/about/api"
+  },
+  "fuel": {
+    "petrol_92": {
+      "price_lkr_per_l": 294.0,
+      "effective_from": "2025-10-31"
+    },
+    "petrol_95": {
+      "price_lkr_per_l": 335.0,
+      "effective_from": "2025-09-30"
+    },
+    "diesel_auto": {
+      "price_lkr_per_l": 277.0,
+      "effective_from": "2025-09-30"
+    },
+    "diesel_super": {
+      "price_lkr_per_l": 318.0,
+      "effective_from": "2025-10-31"
+    },
+    "kerosene": {
+      "price_lkr_per_l": 180.0,
+      "effective_from": "2025-09-30"
+    }
+  },
+  "fx": {
+    "usd_lkr_spot": {
+      "indicative": null,
+      "buy": null,
+      "sell": null
+    },
+    "gbp_lkr": {
+      "indicative": null,
+      "buy": null,
+      "sell": null
+    },
+    "eur_lkr": {
+      "indicative": null,
+      "buy": null,
+      "sell": null
+    }
+  },
+  "gold": {
+    "lkr_per_gram_24k": null,
+    "lkr_per_gram_22k": null,
+    "notes": "Indicative rates; jewellery shop rates may vary."
+  },
   "debug": {
     "updatedBy": "github-actions",
-    "message": "TEST WRITE SUCCESS"
+    "runAt": null,
+    "goldError": "403 Client Error: Forbidden for url: https://goldpricez.com/api/rates?api_key=0a00273685d5cf78515ca96b7dddca150a002736&metal=gold&currency=LKR&unit=gram"
   }
 }
