@@ -1,0 +1,27 @@
+{
+  "app": "SL Market Friend",
+  "tz": "Asia/Colombo",
+  "lastUpdated": "1970-01-01T00:00:00+05:30",
+  "sources": {
+    "fuel": "https://ceypetco.gov.lk/marketing-sales/",
+    "fx": "https://www.cbsl.gov.lk/en/rates-and-indicators/exchange-rates",
+    "gold": "https://goldpricez.com/about/api"
+  },
+  "fuel": {
+    "petrol_92": { "price_lkr_per_l": null, "effective_from": null },
+    "petrol_95": { "price_lkr_per_l": null, "effective_from": null },
+    "diesel_auto": { "price_lkr_per_l": null, "effective_from": null },
+    "diesel_super": { "price_lkr_per_l": null, "effective_from": null },
+    "kerosene": { "price_lkr_per_l": null, "effective_from": null }
+  },
+  "fx": {
+    "usd_lkr_spot": { "indicative": null, "buy": null, "sell": null },
+    "gbp_lkr": { "indicative": null, "buy": null, "sell": null },
+    "eur_lkr": { "indicative": null, "buy": null, "sell": null }
+  },
+  "gold": {
+    "lkr_per_gram_24k": null,
+    "lkr_per_gram_22k": null,
+    "notes": "Indicative rates; jewellery shop rates may vary."
+  }
+}
