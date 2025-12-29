@@ -2,8 +2,7 @@ name: Update prices.json
 
 on:
   schedule:
-    # 07:10 Asia/Colombo ~= 01:40 UTC
-    - cron: "40 1 * * *"
+    - cron: "40 1 * * *" # 07:10 Asia/Colombo ~= 01:40 UTC
   workflow_dispatch: {}
 
 permissions:
@@ -13,8 +12,10 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout gh-pages branch
         uses: actions/checkout@v4
+        with:
+          ref: gh-pages
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -27,8 +28,6 @@ jobs:
           pip install requests beautifulsoup4
 
       - name: Run updater
-        env:
-          GOLDPRICEZ_KEY: ${{ secrets.GOLDPRICEZ_KEY }}
         run: |
           python scripts/update_prices.py
 
@@ -37,4 +36,4 @@ jobs:
           git config user.name "sl-market-friend-bot"
           git config user.email "actions@users.noreply.github.com"
           git add prices.json
-          git diff --cached --quiet || (git commit -m "chore: update prices.json" && git push)
+          git diff --cached --quiet || (git commit -m "chore: update prices.json" && git push origin gh-pages)
