@@ -10,11 +10,13 @@ TZ_OFFSET = timedelta(hours=5, minutes=30)  # Asia/Colombo fixed offset
 CEYPETCO_URL = "https://ceypetco.gov.lk/marketing-sales/"
 CBSL_URL = "https://www.cbsl.gov.lk/en/rates-and-indicators/exchange-rates"
 
-# GoldPriceZ requires an API key (keep it server-side only).
+# OPTIONAL gold support (disabled by default due to 403 issues)
+ENABLE_GOLD = False
 GOLDPRICEZ_URL = "https://goldpricez.com/api/rates"
 GOLDPRICEZ_KEY = os.getenv("GOLDPRICEZ_KEY", "").strip()
 
 OUT_PATH = "prices.json"
+SCRIPT_VERSION = "v3-2025-12-29"
 
 
 def now_colombo_iso() -> str:
@@ -66,8 +68,8 @@ def parse_ceypetco_fuel(html: str):
 def parse_cbsl_fx(html: str):
     """
     Robust FX parser:
-    - CBSL page structure changes frequently; regex on plain text is fragile.
-    - We scan tables, find rows containing USD/GBP/EUR, and extract numeric columns.
+    - CBSL page changes often; regex on plain text is fragile.
+    - We scan <table> rows for USD/GBP/EUR and extract numeric columns.
     """
     soup = BeautifulSoup(html, "html.parser")
 
@@ -77,14 +79,18 @@ def parse_cbsl_fx(html: str):
         s = s.strip().replace(",", "")
         return float(s) if re.match(r"^\d+(\.\d+)?$", s) else None
 
-    # Pick a table that contains USD (prefer tables that include BUY/SELL words)
+    # Find a table containing USD
     tables = soup.find_all("table")
     target = None
+
+    # Prefer tables that mention BUY/SELL/INDICATIVE
     for t in tables:
         txt = t.get_text(" ", strip=True).upper()
         if "USD" in txt and ("BUY" in txt or "SELL" in txt or "INDICATIVE" in txt):
             target = t
             break
+
+    # Fallback: any table containing USD
     if not target:
         for t in tables:
             txt = t.get_text(" ", strip=True).upper()
@@ -113,14 +119,14 @@ def parse_cbsl_fx(html: str):
         if not code:
             continue
 
-        # Collect numeric values in row (in order)
+        # Extract numeric values in row in order
         nums = []
         for v in cells:
             n = to_float(v)
             if n is not None:
                 nums.append(n)
 
-        # Heuristic: take first 3 numbers as indicative/buy/sell if available
+        # Heuristic mapping
         indicative = nums[0] if len(nums) >= 1 else None
         buy = nums[1] if len(nums) >= 2 else None
         sell = nums[2] if len(nums) >= 3 else None
@@ -128,7 +134,7 @@ def parse_cbsl_fx(html: str):
         data_map[code] = {"indicative": indicative, "buy": buy, "sell": sell}
 
     def get(code):
-        return data_map.get(code, {"indicative": None, "buy": None, "sell": None})
+        return data_map.get(code, default)
 
     return {
         "usd_lkr_spot": get("USD"),
@@ -183,7 +189,11 @@ def main():
             "lkr_per_gram_22k": None,
             "notes": "Indicative rates; jewellery shop rates may vary.",
         },
-        "debug": {"updatedBy": "github-actions", "runAt": last_updated},
+        "debug": {
+            "updatedBy": "github-actions",
+            "runAt": last_updated,
+            "scriptVersion": SCRIPT_VERSION,
+        },
     }
 
     # Fuel
@@ -197,18 +207,25 @@ def main():
     try:
         cbsl_html = fetch_html(CBSL_URL)
         payload["fx"] = parse_cbsl_fx(cbsl_html)
+
+        # Add a hint if we still couldn't parse USD
+        if payload["fx"]["usd_lkr_spot"]["indicative"] is None:
+            payload["debug"]["fxHint"] = "Parsed table but USD values not found; CBSL layout may have changed."
     except Exception as e:
         payload["debug"]["fxError"] = str(e)
 
-    # Gold (optional)
-    try:
-        gold = fetch_gold_lkr_per_gram()
-        payload["gold"]["lkr_per_gram_24k"] = gold["lkr_per_gram_24k"]
-        payload["gold"]["lkr_per_gram_22k"] = gold["lkr_per_gram_22k"]
-    except Exception as e:
-        payload["debug"]["goldError"] = str(e)
+    # Gold (disabled by default)
+    if ENABLE_GOLD:
+        try:
+            gold = fetch_gold_lkr_per_gram()
+            payload["gold"]["lkr_per_gram_24k"] = gold["lkr_per_gram_24k"]
+            payload["gold"]["lkr_per_gram_22k"] = gold["lkr_per_gram_22k"]
+        except Exception as e:
+            payload["debug"]["goldError"] = str(e)
+    else:
+        payload["debug"]["goldSkipped"] = True
 
-    # Safe directory creation even when OUT_PATH has no folder
+    # Safe directory creation
     out_dir = os.path.dirname(OUT_PATH)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
