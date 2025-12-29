@@ -6,17 +6,21 @@ from datetime import datetime, timezone, timedelta
 import requests
 from bs4 import BeautifulSoup
 
+# ----------------------------
+# Config
+# ----------------------------
 TZ_OFFSET = timedelta(hours=5, minutes=30)  # Asia/Colombo fixed offset
+
 CEYPETCO_URL = "https://ceypetco.gov.lk/marketing-sales/"
 CBSL_URL = "https://www.cbsl.gov.lk/en/rates-and-indicators/exchange-rates"
 
-# OPTIONAL gold support (disabled by default due to 403 issues)
+# Gold (disabled by default to avoid 403 + key exposure)
 ENABLE_GOLD = False
 GOLDPRICEZ_URL = "https://goldpricez.com/api/rates"
 GOLDPRICEZ_KEY = os.getenv("GOLDPRICEZ_KEY", "").strip()
 
 OUT_PATH = "prices.json"
-SCRIPT_VERSION = "v3-2025-12-29"
+SCRIPT_VERSION = "v4-2025-12-29"
 
 
 def now_colombo_iso() -> str:
@@ -30,6 +34,9 @@ def fetch_html(url: str) -> str:
     return r.text
 
 
+# ----------------------------
+# Fuel: Ceypetco page parsing (your current method works)
+# ----------------------------
 def parse_ceypetco_fuel(html: str):
     soup = BeautifulSoup(html, "html.parser")
     text = soup.get_text("\n")
@@ -65,40 +72,38 @@ def parse_ceypetco_fuel(html: str):
     return out
 
 
+# ----------------------------
+# FX: CBSL parsing (table-based, more robust than regex)
+# ----------------------------
 def parse_cbsl_fx(html: str):
-    """
-    Robust FX parser:
-    - CBSL page changes often; regex on plain text is fragile.
-    - We scan <table> rows for USD/GBP/EUR and extract numeric columns.
-    """
     soup = BeautifulSoup(html, "html.parser")
 
-    def to_float(s):
+    def to_float(s: str):
         if s is None:
             return None
         s = s.strip().replace(",", "")
         return float(s) if re.match(r"^\d+(\.\d+)?$", s) else None
 
-    # Find a table containing USD
+    default = {"indicative": None, "buy": None, "sell": None}
+
+    # Find a table that likely contains currency rows
     tables = soup.find_all("table")
     target = None
 
-    # Prefer tables that mention BUY/SELL/INDICATIVE
+    # Prefer tables containing USD and BUY/SELL-like words
     for t in tables:
         txt = t.get_text(" ", strip=True).upper()
-        if "USD" in txt and ("BUY" in txt or "SELL" in txt or "INDICATIVE" in txt):
+        if "USD" in txt and ("BUY" in txt or "SELL" in txt or "INDICATIVE" in txt or "MIDDLE" in txt):
             target = t
             break
 
     # Fallback: any table containing USD
     if not target:
         for t in tables:
-            txt = t.get_text(" ", strip=True).upper()
-            if "USD" in txt:
+            if "USD" in t.get_text(" ", strip=True).upper():
                 target = t
                 break
 
-    default = {"indicative": None, "buy": None, "sell": None}
     if not target:
         return {"usd_lkr_spot": default, "gbp_lkr": default, "eur_lkr": default}
 
@@ -119,21 +124,22 @@ def parse_cbsl_fx(html: str):
         if not code:
             continue
 
-        # Extract numeric values in row in order
+        # Extract numeric values from the row
         nums = []
         for v in cells:
             n = to_float(v)
             if n is not None:
                 nums.append(n)
 
-        # Heuristic mapping
+        # Heuristic mapping:
+        # If the table has 3+ numbers, we map first 3 into indicative/buy/sell.
         indicative = nums[0] if len(nums) >= 1 else None
         buy = nums[1] if len(nums) >= 2 else None
         sell = nums[2] if len(nums) >= 3 else None
 
         data_map[code] = {"indicative": indicative, "buy": buy, "sell": sell}
 
-    def get(code):
+    def get(code: str):
         return data_map.get(code, default)
 
     return {
@@ -143,6 +149,9 @@ def parse_cbsl_fx(html: str):
     }
 
 
+# ----------------------------
+# Gold: disabled by default; safe error handling
+# ----------------------------
 def fetch_gold_lkr_per_gram():
     if not GOLDPRICEZ_KEY:
         return {"lkr_per_gram_24k": None, "lkr_per_gram_22k": None}
@@ -208,24 +217,24 @@ def main():
         cbsl_html = fetch_html(CBSL_URL)
         payload["fx"] = parse_cbsl_fx(cbsl_html)
 
-        # Add a hint if we still couldn't parse USD
         if payload["fx"]["usd_lkr_spot"]["indicative"] is None:
-            payload["debug"]["fxHint"] = "Parsed table but USD values not found; CBSL layout may have changed."
+            payload["debug"]["fxHint"] = "CBSL table found, but USD values not extracted. Layout may have changed."
     except Exception as e:
         payload["debug"]["fxError"] = str(e)
 
-    # Gold (disabled by default)
+    # Gold (disabled by default to avoid 403 + key exposure)
     if ENABLE_GOLD:
         try:
             gold = fetch_gold_lkr_per_gram()
             payload["gold"]["lkr_per_gram_24k"] = gold["lkr_per_gram_24k"]
             payload["gold"]["lkr_per_gram_22k"] = gold["lkr_per_gram_22k"]
         except Exception as e:
-            payload["debug"]["goldError"] = str(e)
+            # DO NOT leak URL (which contains the key). Store short message only.
+            payload["debug"]["goldError"] = str(e).split(" for url:")[0]
     else:
         payload["debug"]["goldSkipped"] = True
 
-    # Safe directory creation
+    # Safe directory creation (root OUT_PATH => no folder)
     out_dir = os.path.dirname(OUT_PATH)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
