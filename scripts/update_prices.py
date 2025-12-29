@@ -6,21 +6,23 @@ from datetime import datetime, timezone, timedelta
 import requests
 from bs4 import BeautifulSoup
 
-# ----------------------------
+# -----------------------
 # Config
-# ----------------------------
+# -----------------------
 TZ_OFFSET = timedelta(hours=5, minutes=30)  # Asia/Colombo fixed offset
 
 CEYPETCO_URL = "https://ceypetco.gov.lk/marketing-sales/"
-CBSL_URL = "https://www.cbsl.gov.lk/en/rates-and-indicators/exchange-rates"
 
-# Gold (disabled by default to avoid 403 + key exposure)
-ENABLE_GOLD = False
-GOLDPRICEZ_URL = "https://goldpricez.com/api/rates"
-GOLDPRICEZ_KEY = os.getenv("GOLDPRICEZ_KEY", "").strip()
+# FX (no key): ExchangeRate-API Open Access (updates daily)
+FX_URL = "https://open.er-api.com/v6/latest/USD"
 
-OUT_PATH = "prices.json"
-SCRIPT_VERSION = "v4-2025-12-29"
+# Gold (no key): Gold-API (XAU price in USD per oz)
+GOLD_URL = "https://api.gold-api.com/price/XAU"
+
+# Output JSON (for GitHub Pages repo: public/prices.json)
+OUT_PATH = "public/prices.json"
+
+TROY_OUNCE_TO_GRAM = 31.1034768
 
 
 def now_colombo_iso() -> str:
@@ -28,21 +30,28 @@ def now_colombo_iso() -> str:
     return dt.isoformat(timespec="seconds")
 
 
-def fetch_html(url: str) -> str:
+def http_get_json(url: str) -> dict:
+    r = requests.get(url, timeout=30, headers={"User-Agent": "sl-market-friend-bot/1.0"})
+    r.raise_for_status()
+    return r.json()
+
+
+def http_get_html(url: str) -> str:
     r = requests.get(url, timeout=30, headers={"User-Agent": "sl-market-friend-bot/1.0"})
     r.raise_for_status()
     return r.text
 
 
-# ----------------------------
-# Fuel: Ceypetco page parsing (your current method works)
-# ----------------------------
-def parse_ceypetco_fuel(html: str):
+# -----------------------
+# Fuel (CEYPETCO) parsing
+# -----------------------
+def parse_ceypetco_fuel(html: str) -> dict:
     soup = BeautifulSoup(html, "html.parser")
     text = soup.get_text("\n")
     text = re.sub(r"[ \t]+", " ", text)
 
     def find_price_effect(product_name: str):
+        # Example pattern in page: "Rs. 294.00" and "Effect from: 31-10-2025"
         pattern = re.compile(
             rf"{re.escape(product_name)}.*?Rs\.\s*([\d,]+(?:\.\d+)?)\s*.*?Effect from:\s*([0-9]{{2}}-[0-9]{{2}}-[0-9]{{4}})",
             re.IGNORECASE | re.DOTALL,
@@ -69,108 +78,75 @@ def parse_ceypetco_fuel(html: str):
         res = find_price_effect(name)
         if res:
             out[key]["price_lkr_per_l"], out[key]["effective_from"] = res
+
+    # keep schema stable if site changes
+    if "kerosene" not in out:
+        out["kerosene"] = {"price_lkr_per_l": None, "effective_from": None}
+
     return out
 
 
-# ----------------------------
-# FX: CBSL parsing (table-based, more robust than regex)
-# ----------------------------
-def parse_cbsl_fx(html: str):
-    soup = BeautifulSoup(html, "html.parser")
+# -----------------------
+# FX (Open ER API)
+# -----------------------
+def fetch_fx_usd_gbp_eur_to_lkr():
+    """
+    We fetch base USD rates (USD->LKR).
+    For GBP->LKR and EUR->LKR we derive using cross rates:
+      GBP->LKR = (USD->LKR) / (USD->GBP)
+      EUR->LKR = (USD->LKR) / (USD->EUR)
+    """
+    data = http_get_json(FX_URL)
 
-    def to_float(s: str):
-        if s is None:
-            return None
-        s = s.strip().replace(",", "")
-        return float(s) if re.match(r"^\d+(\.\d+)?$", s) else None
+    if data.get("result") != "success":
+        raise RuntimeError(f"FX API returned non-success: {data}")
 
-    default = {"indicative": None, "buy": None, "sell": None}
+    rates = data.get("rates") or {}
+    usd_lkr = rates.get("LKR")
+    usd_gbp = rates.get("GBP")
+    usd_eur = rates.get("EUR")
 
-    # Find a table that likely contains currency rows
-    tables = soup.find_all("table")
-    target = None
+    if not usd_lkr or not usd_gbp or not usd_eur:
+        raise RuntimeError(f"Missing required FX rates in response: LKR/GBP/EUR not found")
 
-    # Prefer tables containing USD and BUY/SELL-like words
-    for t in tables:
-        txt = t.get_text(" ", strip=True).upper()
-        if "USD" in txt and ("BUY" in txt or "SELL" in txt or "INDICATIVE" in txt or "MIDDLE" in txt):
-            target = t
-            break
+    gbp_lkr = usd_lkr / usd_gbp
+    eur_lkr = usd_lkr / usd_eur
 
-    # Fallback: any table containing USD
-    if not target:
-        for t in tables:
-            if "USD" in t.get_text(" ", strip=True).upper():
-                target = t
-                break
-
-    if not target:
-        return {"usd_lkr_spot": default, "gbp_lkr": default, "eur_lkr": default}
-
-    data_map = {}
-
-    for r in target.find_all("tr"):
-        cells = [c.get_text(" ", strip=True) for c in r.find_all(["th", "td"])]
-        if not cells:
-            continue
-
-        row_upper = " ".join(cells).upper()
-
-        code = None
-        for c in ("USD", "GBP", "EUR"):
-            if re.search(rf"\b{c}\b", row_upper):
-                code = c
-                break
-        if not code:
-            continue
-
-        # Extract numeric values from the row
-        nums = []
-        for v in cells:
-            n = to_float(v)
-            if n is not None:
-                nums.append(n)
-
-        # Heuristic mapping:
-        # If the table has 3+ numbers, we map first 3 into indicative/buy/sell.
-        indicative = nums[0] if len(nums) >= 1 else None
-        buy = nums[1] if len(nums) >= 2 else None
-        sell = nums[2] if len(nums) >= 3 else None
-
-        data_map[code] = {"indicative": indicative, "buy": buy, "sell": sell}
-
-    def get(code: str):
-        return data_map.get(code, default)
-
+    # We only have "mid/indicative" from this API; no buy/sell.
     return {
-        "usd_lkr_spot": get("USD"),
-        "gbp_lkr": get("GBP"),
-        "eur_lkr": get("EUR"),
+        "usd_lkr_spot": {"indicative": round(float(usd_lkr), 4), "buy": None, "sell": None},
+        "gbp_lkr": {"indicative": round(float(gbp_lkr), 4), "buy": None, "sell": None},
+        "eur_lkr": {"indicative": round(float(eur_lkr), 4), "buy": None, "sell": None},
     }
 
 
-# ----------------------------
-# Gold: disabled by default; safe error handling
-# ----------------------------
-def fetch_gold_lkr_per_gram():
-    if not GOLDPRICEZ_KEY:
-        return {"lkr_per_gram_24k": None, "lkr_per_gram_22k": None}
+# -----------------------
+# Gold (Gold-API) + FX conversion
+# -----------------------
+def fetch_gold_lkr_per_gram(fx_usd_lkr: float):
+    """
+    Gold-API returns XAU price in USD per oz.
+    Convert to LKR/gram:
+      LKR_per_oz = USD_per_oz * USD_to_LKR
+      LKR_per_gram = LKR_per_oz / 31.1034768
+    """
+    data = http_get_json(GOLD_URL)
 
-    params = {"api_key": GOLDPRICEZ_KEY, "metal": "gold", "currency": "LKR", "unit": "gram"}
-    r = requests.get(GOLDPRICEZ_URL, params=params, timeout=30, headers={"User-Agent": "sl-market-friend-bot/1.0"})
-    r.raise_for_status()
-    data = r.json()
+    # Common fields observed in such APIs: "price" or similar.
+    # We'll be defensive:
+    usd_per_oz = data.get("price") or data.get("value") or data.get("rate")
+    if usd_per_oz is None:
+        raise RuntimeError(f"Gold API response missing price fields: {data}")
 
-    rate = None
-    if isinstance(data, dict):
-        rate = data.get("rate") or data.get("price") or data.get("value")
+    usd_per_oz = float(usd_per_oz)
+    lkr_per_oz = usd_per_oz * float(fx_usd_lkr)
+    lkr_per_gram_24k = lkr_per_oz / TROY_OUNCE_TO_GRAM
+    lkr_per_gram_22k = lkr_per_gram_24k * (22.0 / 24.0)
 
-    if rate is None:
-        return {"lkr_per_gram_24k": None, "lkr_per_gram_22k": None}
-
-    g24 = float(rate)
-    g22 = g24 * (22.0 / 24.0)
-    return {"lkr_per_gram_24k": round(g24, 2), "lkr_per_gram_22k": round(g22, 2)}
+    return {
+        "lkr_per_gram_24k": round(lkr_per_gram_24k, 2),
+        "lkr_per_gram_22k": round(lkr_per_gram_22k, 2),
+    }
 
 
 def main():
@@ -180,7 +156,11 @@ def main():
         "app": "SL Market Friend",
         "tz": "Asia/Colombo",
         "lastUpdated": last_updated,
-        "sources": {"fuel": CEYPETCO_URL, "fx": CBSL_URL, "gold": "https://goldpricez.com/about/api"},
+        "sources": {
+            "fuel": CEYPETCO_URL,
+            "fx": FX_URL,               # changed to stable API
+            "gold": GOLD_URL,           # changed to stable API
+        },
         "fuel": {
             "petrol_92": {"price_lkr_per_l": None, "effective_from": None},
             "petrol_95": {"price_lkr_per_l": None, "effective_from": None},
@@ -201,40 +181,36 @@ def main():
         "debug": {
             "updatedBy": "github-actions",
             "runAt": last_updated,
-            "scriptVersion": SCRIPT_VERSION,
         },
     }
 
     # Fuel
     try:
-        ce_html = fetch_html(CEYPETCO_URL)
+        ce_html = http_get_html(CEYPETCO_URL)
         payload["fuel"] = parse_ceypetco_fuel(ce_html)
     except Exception as e:
         payload["debug"]["fuelError"] = str(e)
 
     # FX
+    fx_usd_lkr = None
     try:
-        cbsl_html = fetch_html(CBSL_URL)
-        payload["fx"] = parse_cbsl_fx(cbsl_html)
-
-        if payload["fx"]["usd_lkr_spot"]["indicative"] is None:
-            payload["debug"]["fxHint"] = "CBSL table found, but USD values not extracted. Layout may have changed."
+        fx_obj = fetch_fx_usd_gbp_eur_to_lkr()
+        payload["fx"] = fx_obj
+        fx_usd_lkr = fx_obj["usd_lkr_spot"]["indicative"]
     except Exception as e:
         payload["debug"]["fxError"] = str(e)
 
-    # Gold (disabled by default to avoid 403 + key exposure)
-    if ENABLE_GOLD:
-        try:
-            gold = fetch_gold_lkr_per_gram()
-            payload["gold"]["lkr_per_gram_24k"] = gold["lkr_per_gram_24k"]
-            payload["gold"]["lkr_per_gram_22k"] = gold["lkr_per_gram_22k"]
-        except Exception as e:
-            # DO NOT leak URL (which contains the key). Store short message only.
-            payload["debug"]["goldError"] = str(e).split(" for url:")[0]
-    else:
-        payload["debug"]["goldSkipped"] = True
+    # Gold (needs USD->LKR)
+    try:
+        if fx_usd_lkr is None:
+            raise RuntimeError("FX USD->LKR missing, cannot compute LKR gold price.")
+        gold_obj = fetch_gold_lkr_per_gram(fx_usd_lkr=float(fx_usd_lkr))
+        payload["gold"]["lkr_per_gram_24k"] = gold_obj["lkr_per_gram_24k"]
+        payload["gold"]["lkr_per_gram_22k"] = gold_obj["lkr_per_gram_22k"]
+    except Exception as e:
+        payload["debug"]["goldError"] = str(e)
 
-    # Safe directory creation (root OUT_PATH => no folder)
+    # Write output
     out_dir = os.path.dirname(OUT_PATH)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
