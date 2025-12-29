@@ -64,28 +64,76 @@ def parse_ceypetco_fuel(html: str):
 
 
 def parse_cbsl_fx(html: str):
+    """
+    Robust FX parser:
+    - CBSL page structure changes frequently; regex on plain text is fragile.
+    - We scan tables, find rows containing USD/GBP/EUR, and extract numeric columns.
+    """
     soup = BeautifulSoup(html, "html.parser")
-    text = soup.get_text("\n")
-    text = re.sub(r"[ \t]+", " ", text)
 
-    def extract_triplet(currency_code: str):
-        pattern = re.compile(
-            rf"{currency_code}.*?Indicative\s*([\d.]+).*?Buy\s*([\d.]+).*?Sell\s*([\d.]+)",
-            re.IGNORECASE | re.DOTALL,
-        )
-        m = pattern.search(text)
-        if not m:
-            return {"indicative": None, "buy": None, "sell": None}
-        return {
-            "indicative": float(m.group(1)),
-            "buy": float(m.group(2)),
-            "sell": float(m.group(3)),
-        }
+    def to_float(s):
+        if s is None:
+            return None
+        s = s.strip().replace(",", "")
+        return float(s) if re.match(r"^\d+(\.\d+)?$", s) else None
+
+    # Pick a table that contains USD (prefer tables that include BUY/SELL words)
+    tables = soup.find_all("table")
+    target = None
+    for t in tables:
+        txt = t.get_text(" ", strip=True).upper()
+        if "USD" in txt and ("BUY" in txt or "SELL" in txt or "INDICATIVE" in txt):
+            target = t
+            break
+    if not target:
+        for t in tables:
+            txt = t.get_text(" ", strip=True).upper()
+            if "USD" in txt:
+                target = t
+                break
+
+    default = {"indicative": None, "buy": None, "sell": None}
+    if not target:
+        return {"usd_lkr_spot": default, "gbp_lkr": default, "eur_lkr": default}
+
+    data_map = {}
+
+    for r in target.find_all("tr"):
+        cells = [c.get_text(" ", strip=True) for c in r.find_all(["th", "td"])]
+        if not cells:
+            continue
+
+        row_upper = " ".join(cells).upper()
+
+        code = None
+        for c in ("USD", "GBP", "EUR"):
+            if re.search(rf"\b{c}\b", row_upper):
+                code = c
+                break
+        if not code:
+            continue
+
+        # Collect numeric values in row (in order)
+        nums = []
+        for v in cells:
+            n = to_float(v)
+            if n is not None:
+                nums.append(n)
+
+        # Heuristic: take first 3 numbers as indicative/buy/sell if available
+        indicative = nums[0] if len(nums) >= 1 else None
+        buy = nums[1] if len(nums) >= 2 else None
+        sell = nums[2] if len(nums) >= 3 else None
+
+        data_map[code] = {"indicative": indicative, "buy": buy, "sell": sell}
+
+    def get(code):
+        return data_map.get(code, {"indicative": None, "buy": None, "sell": None})
 
     return {
-        "usd_lkr_spot": extract_triplet("USD"),
-        "gbp_lkr": extract_triplet("GBP"),
-        "eur_lkr": extract_triplet("EUR"),
+        "usd_lkr_spot": get("USD"),
+        "gbp_lkr": get("GBP"),
+        "eur_lkr": get("EUR"),
     }
 
 
@@ -111,10 +159,12 @@ def fetch_gold_lkr_per_gram():
 
 
 def main():
+    last_updated = now_colombo_iso()
+
     payload = {
         "app": "SL Market Friend",
         "tz": "Asia/Colombo",
-        "lastUpdated": now_colombo_iso(),
+        "lastUpdated": last_updated,
         "sources": {"fuel": CEYPETCO_URL, "fx": CBSL_URL, "gold": "https://goldpricez.com/about/api"},
         "fuel": {
             "petrol_92": {"price_lkr_per_l": None, "effective_from": None},
@@ -128,24 +178,29 @@ def main():
             "gbp_lkr": {"indicative": None, "buy": None, "sell": None},
             "eur_lkr": {"indicative": None, "buy": None, "sell": None},
         },
-        "gold": {"lkr_per_gram_24k": None, "lkr_per_gram_22k": None, "notes": "Indicative rates; jewellery shop rates may vary."},
-        "debug": {"updatedBy": "github-actions", "runAt": payload["lastUpdated"] if "lastUpdated" in locals() else None},
+        "gold": {
+            "lkr_per_gram_24k": None,
+            "lkr_per_gram_22k": None,
+            "notes": "Indicative rates; jewellery shop rates may vary.",
+        },
+        "debug": {"updatedBy": "github-actions", "runAt": last_updated},
     }
 
-    # Fuel + FX HTML fetch (keep resilient)
+    # Fuel
     try:
         ce_html = fetch_html(CEYPETCO_URL)
         payload["fuel"] = parse_ceypetco_fuel(ce_html)
     except Exception as e:
         payload["debug"]["fuelError"] = str(e)
 
+    # FX
     try:
         cbsl_html = fetch_html(CBSL_URL)
         payload["fx"] = parse_cbsl_fx(cbsl_html)
     except Exception as e:
         payload["debug"]["fxError"] = str(e)
 
-    # Gold API (optional)
+    # Gold (optional)
     try:
         gold = fetch_gold_lkr_per_gram()
         payload["gold"]["lkr_per_gram_24k"] = gold["lkr_per_gram_24k"]
