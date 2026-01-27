@@ -1,7 +1,7 @@
 {
   "app": "SL Market Friend",
   "tz": "Asia/Colombo",
-  "lastUpdated": "2026-01-26T09:04:06+05:30",
+  "lastUpdated": "2026-01-27T08:56:26+05:30",
   "sources": {
     "fuel": "https://ceypetco.gov.lk/marketing-sales/",
     "fx": "https://open.er-api.com/v6/latest/USD",
@@ -31,30 +31,29 @@
   },
   "fx": {
     "usd_lkr_spot": {
-      "indicative": 309.4867,
+      "indicative": 309.327,
       "buy": null,
       "sell": null
     },
     "gbp_lkr": {
-      "indicative": 421.7054,
+      "indicative": 422.8176,
       "buy": null,
       "sell": null
     },
     "eur_lkr": {
-      "indicative": 366.129,
+      "indicative": 367.0544,
       "buy": null,
       "sell": null
     }
   },
   "gold": {
-    "lkr_per_gram_24k": null,
-    "lkr_per_gram_22k": null,
+    "lkr_per_gram_24k": 50429.58,
+    "lkr_per_gram_22k": 46227.12,
     "notes": "Indicative rates; jewellery shop rates may vary."
   },
   "debug": {
     "updatedBy": "github-actions",
-    "runAt": "2026-01-26T09:04:06+05:30",
-    "scriptVersion": "v5-api-based-2025-12-30",
-    "goldError": "HTTPSConnectionPool(host='api.gold-api.com', port=443): Max retries exceeded with url: /price/XAU (Caused by NameResolutionError(\"HTTPSConnection(host='api.gold-api.com', port=443): Failed to resolve 'api.gold-api.com' ([Errno -2] Name or service not known)\"))"
+    "runAt": "2026-01-27T08:56:26+05:30",
+    "scriptVersion": "v5-api-based-2025-12-30"
   }
 }
