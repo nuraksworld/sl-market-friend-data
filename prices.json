@@ -1,7 +1,7 @@
 {
   "app": "SL Market Friend",
   "tz": "Asia/Colombo",
-  "lastUpdated": "2026-02-01T09:45:35+05:30",
+  "lastUpdated": "2026-02-02T09:37:36+05:30",
   "sources": {
     "fuel": "https://ceypetco.gov.lk/marketing-sales/",
     "fx": "https://open.er-api.com/v6/latest/USD",
@@ -9,16 +9,16 @@
   },
   "fuel": {
     "petrol_92": {
-      "price_lkr_per_l": 294.0,
-      "effective_from": "2026-01-05"
+      "price_lkr_per_l": 292.0,
+      "effective_from": "2026-01-31"
     },
     "petrol_95": {
       "price_lkr_per_l": 340.0,
       "effective_from": "2026-01-05"
     },
     "diesel_auto": {
-      "price_lkr_per_l": 279.0,
-      "effective_from": "2026-01-05"
+      "price_lkr_per_l": 277.0,
+      "effective_from": "2026-01-31"
     },
     "diesel_super": {
       "price_lkr_per_l": 323.0,
@@ -31,29 +31,29 @@
   },
   "fx": {
     "usd_lkr_spot": {
-      "indicative": 309.3109,
+      "indicative": 309.0614,
       "buy": null,
       "sell": null
     },
     "gbp_lkr": {
-      "indicative": 424.551,
+      "indicative": 423.286,
       "buy": null,
       "sell": null
     },
     "eur_lkr": {
-      "indicative": 367.9075,
+      "indicative": 366.6044,
       "buy": null,
       "sell": null
     }
   },
   "gold": {
-    "lkr_per_gram_24k": 48642.9,
-    "lkr_per_gram_22k": 44589.32,
+    "lkr_per_gram_24k": 46085.74,
+    "lkr_per_gram_22k": 42245.26,
     "notes": "Indicative rates; jewellery shop rates may vary."
   },
   "debug": {
     "updatedBy": "github-actions",
-    "runAt": "2026-02-01T09:45:35+05:30",
+    "runAt": "2026-02-02T09:37:36+05:30",
     "scriptVersion": "v5-api-based-2025-12-30"
   }
 }
