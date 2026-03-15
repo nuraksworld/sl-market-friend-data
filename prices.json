@@ -1,7 +1,7 @@
 {
   "app": "SL Market Friend",
   "tz": "Asia/Colombo",
-  "lastUpdated": "2026-03-14T09:25:07+05:30",
+  "lastUpdated": "2026-03-15T09:47:34+05:30",
   "sources": {
     "fuel": "https://ceypetco.gov.lk/marketing-sales/",
     "fx": "https://open.er-api.com/v6/latest/USD",
@@ -9,51 +9,52 @@
   },
   "fuel": {
     "petrol_92": {
-      "price_lkr_per_l": 317.0,
-      "effective_from": "2026-03-09"
+      "price_lkr_per_l": null,
+      "effective_from": null
     },
     "petrol_95": {
-      "price_lkr_per_l": 365.0,
-      "effective_from": "2026-03-09"
+      "price_lkr_per_l": null,
+      "effective_from": null
     },
     "diesel_auto": {
-      "price_lkr_per_l": 303.0,
-      "effective_from": "2026-03-09"
+      "price_lkr_per_l": null,
+      "effective_from": null
     },
     "diesel_super": {
-      "price_lkr_per_l": 353.0,
-      "effective_from": "2026-03-09"
+      "price_lkr_per_l": null,
+      "effective_from": null
     },
     "kerosene": {
-      "price_lkr_per_l": 195.0,
-      "effective_from": "2026-03-09"
+      "price_lkr_per_l": null,
+      "effective_from": null
     }
   },
   "fx": {
     "usd_lkr_spot": {
-      "indicative": 311.0967,
+      "indicative": 311.081,
       "buy": null,
       "sell": null
     },
     "gbp_lkr": {
-      "indicative": 412.1878,
+      "indicative": 412.3457,
       "buy": null,
       "sell": null
     },
     "eur_lkr": {
-      "indicative": 356.1084,
+      "indicative": 356.2695,
       "buy": null,
       "sell": null
     }
   },
   "gold": {
-    "lkr_per_gram_24k": 50207.0,
-    "lkr_per_gram_22k": 46023.08,
+    "lkr_per_gram_24k": 50204.46,
+    "lkr_per_gram_22k": 46020.76,
     "notes": "Indicative rates; jewellery shop rates may vary."
   },
   "debug": {
     "updatedBy": "github-actions",
-    "runAt": "2026-03-14T09:25:07+05:30",
-    "scriptVersion": "v5-api-based-2025-12-30"
+    "runAt": "2026-03-15T09:47:34+05:30",
+    "scriptVersion": "v5-api-based-2025-12-30",
+    "fuelError": "HTTPSConnectionPool(host='ceypetco.gov.lk', port=443): Read timed out. (read timeout=30)"
   }
 }
