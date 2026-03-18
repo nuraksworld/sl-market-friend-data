@@ -1,7 +1,7 @@
 {
   "app": "SL Market Friend",
   "tz": "Asia/Colombo",
-  "lastUpdated": "2026-03-17T09:31:13+05:30",
+  "lastUpdated": "2026-03-18T09:38:11+05:30",
   "sources": {
     "fuel": "https://ceypetco.gov.lk/marketing-sales/",
     "fx": "https://open.er-api.com/v6/latest/USD",
@@ -31,29 +31,29 @@
   },
   "fx": {
     "usd_lkr_spot": {
-      "indicative": 311.0737,
+      "indicative": 311.0788,
       "buy": null,
       "sell": null
     },
     "gbp_lkr": {
-      "indicative": 413.8175,
+      "indicative": 415.2418,
       "buy": null,
       "sell": null
     },
     "eur_lkr": {
-      "indicative": 357.3288,
+      "indicative": 358.7151,
       "buy": null,
       "sell": null
     }
   },
   "gold": {
-    "lkr_per_gram_24k": 50292.3,
-    "lkr_per_gram_22k": 46101.27,
+    "lkr_per_gram_24k": 49928.07,
+    "lkr_per_gram_22k": 45767.4,
     "notes": "Indicative rates; jewellery shop rates may vary."
   },
   "debug": {
     "updatedBy": "github-actions",
-    "runAt": "2026-03-17T09:31:13+05:30",
+    "runAt": "2026-03-18T09:38:11+05:30",
     "scriptVersion": "v5-api-based-2025-12-30",
     "fuelError": "HTTPSConnectionPool(host='ceypetco.gov.lk', port=443): Max retries exceeded with url: /marketing-sales/ (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)')))"
   }
