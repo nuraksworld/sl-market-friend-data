@@ -1,7 +1,7 @@
 {
   "app": "SL Market Friend",
   "tz": "Asia/Colombo",
-  "lastUpdated": "2026-06-21T12:00:07+05:30",
+  "lastUpdated": "2026-06-22T12:31:34+05:30",
   "sources": {
     "fuel": "https://ceypetco.gov.lk/marketing-sales/",
     "fx": "https://open.er-api.com/v6/latest/USD",
@@ -47,13 +47,13 @@
     }
   },
   "gold": {
-    "lkr_per_gram_24k": 44605.39,
-    "lkr_per_gram_22k": 40888.27,
+    "lkr_per_gram_24k": 45055.01,
+    "lkr_per_gram_22k": 41300.43,
     "notes": "Indicative rates; jewellery shop rates may vary."
   },
   "debug": {
     "updatedBy": "github-actions",
-    "runAt": "2026-06-21T12:00:07+05:30",
+    "runAt": "2026-06-22T12:31:34+05:30",
     "scriptVersion": "v5-api-based-2025-12-30"
   }
 }
