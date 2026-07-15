@@ -1,7 +1,7 @@
 {
   "app": "SL Market Friend",
   "tz": "Asia/Colombo",
-  "lastUpdated": "2026-07-14T10:02:34+05:30",
+  "lastUpdated": "2026-07-15T10:02:28+05:30",
   "sources": {
     "fuel": "https://ceypetco.gov.lk/marketing-sales/",
     "fx": "https://open.er-api.com/v6/latest/USD",
@@ -31,29 +31,29 @@
   },
   "fx": {
     "usd_lkr_spot": {
-      "indicative": 335.5539,
+      "indicative": 335.9517,
       "buy": null,
       "sell": null
     },
     "gbp_lkr": {
-      "indicative": 448.4342,
+      "indicative": 449.7262,
       "buy": null,
       "sell": null
     },
     "eur_lkr": {
-      "indicative": 382.4395,
+      "indicative": 383.6099,
       "buy": null,
       "sell": null
     }
   },
   "gold": {
-    "lkr_per_gram_24k": 43372.24,
-    "lkr_per_gram_22k": 39757.88,
+    "lkr_per_gram_24k": 43583.51,
+    "lkr_per_gram_22k": 39951.55,
     "notes": "Indicative rates; jewellery shop rates may vary."
   },
   "debug": {
     "updatedBy": "github-actions",
-    "runAt": "2026-07-14T10:02:34+05:30",
+    "runAt": "2026-07-15T10:02:28+05:30",
     "scriptVersion": "v5-api-based-2025-12-30",
     "fuelError": "HTTPSConnectionPool(host='ceypetco.gov.lk', port=443): Max retries exceeded with url: /marketing-sales/ (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1016)')))"
   }
