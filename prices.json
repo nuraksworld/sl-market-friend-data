@@ -1,7 +1,7 @@
 {
   "app": "SL Market Friend",
   "tz": "Asia/Colombo",
-  "lastUpdated": "2026-08-21T08:17:23+05:30",
+  "lastUpdated": "2026-08-22T08:08:27+05:30",
   "sources": {
     "fuel": "https://ceypetco.gov.lk/marketing-sales/",
     "fx": "https://open.er-api.com/v6/latest/USD",
@@ -31,29 +31,29 @@
   },
   "fx": {
     "usd_lkr_spot": {
-      "indicative": 330.0443,
+      "indicative": 329.7848,
       "buy": null,
       "sell": null
     },
     "gbp_lkr": {
-      "indicative": 449.976,
+      "indicative": 449.7209,
       "buy": null,
       "sell": null
     },
     "eur_lkr": {
-      "indicative": 385.5491,
+      "indicative": 385.2509,
       "buy": null,
       "sell": null
     }
   },
   "gold": {
-    "lkr_per_gram_24k": 48147.12,
-    "lkr_per_gram_22k": 44134.86,
+    "lkr_per_gram_24k": 48819.66,
+    "lkr_per_gram_22k": 44751.35,
     "notes": "Indicative rates; jewellery shop rates may vary."
   },
   "debug": {
     "updatedBy": "github-actions",
-    "runAt": "2026-08-21T08:17:23+05:30",
+    "runAt": "2026-08-22T08:08:27+05:30",
     "scriptVersion": "v5-api-based-2025-12-30"
   }
 }
