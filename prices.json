@@ -1,7 +1,7 @@
 {
   "app": "SL Market Friend",
   "tz": "Asia/Colombo",
-  "lastUpdated": "2026-10-28T12:49:04+05:30",
+  "lastUpdated": "2026-10-29T13:08:09+05:30",
   "sources": {
     "fuel": "https://ceypetco.gov.lk/marketing-sales/",
     "fx": "https://open.er-api.com/v6/latest/USD",
@@ -31,30 +31,30 @@
   },
   "fx": {
     "usd_lkr_spot": {
-      "indicative": 332.201,
+      "indicative": 332.1632,
       "buy": null,
       "sell": null
     },
     "gbp_lkr": {
-      "indicative": 442.3119,
+      "indicative": 441.978,
       "buy": null,
       "sell": null
     },
     "eur_lkr": {
-      "indicative": 370.1598,
+      "indicative": 370.2159,
       "buy": null,
       "sell": null
     }
   },
   "gold": {
-    "lkr_per_gram_24k": 43095.86,
-    "lkr_per_gram_22k": 39504.54,
+    "lkr_per_gram_24k": 43045.03,
+    "lkr_per_gram_22k": 39457.95,
     "notes": "Indicative rates; jewellery shop rates may vary."
   },
   "debug": {
     "updatedBy": "github-actions",
-    "runAt": "2026-10-28T12:49:04+05:30",
+    "runAt": "2026-10-29T13:08:09+05:30",
     "scriptVersion": "v5-api-based-2025-12-30",
-    "fuelError": "HTTPSConnectionPool(host='ceypetco.gov.lk', port=443): Max retries exceeded with url: /marketing-sales/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='ceypetco.gov.lk', port=443) at 0x7f76191093d0>, 'Connection to ceypetco.gov.lk timed out. (connect timeout=30)'))"
+    "fuelError": "HTTPSConnectionPool(host='ceypetco.gov.lk', port=443): Max retries exceeded with url: /marketing-sales/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='ceypetco.gov.lk', port=443) at 0x7f1ba82d9350>, 'Connection to ceypetco.gov.lk timed out. (connect timeout=30)'))"
   }
 }
