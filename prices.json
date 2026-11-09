@@ -1,7 +1,7 @@
 {
   "app": "SL Market Friend",
   "tz": "Asia/Colombo",
-  "lastUpdated": "2026-11-08T13:24:28+05:30",
+  "lastUpdated": "2026-11-09T14:07:06+05:30",
   "sources": {
     "fuel": "https://ceypetco.gov.lk/marketing-sales/",
     "fx": "https://open.er-api.com/v6/latest/USD",
@@ -31,30 +31,29 @@
   },
   "fx": {
     "usd_lkr_spot": {
-      "indicative": 332.4171,
+      "indicative": 332.4204,
       "buy": null,
       "sell": null
     },
     "gbp_lkr": {
-      "indicative": 444.7212,
+      "indicative": 444.1949,
       "buy": null,
       "sell": null
     },
     "eur_lkr": {
-      "indicative": 371.0869,
+      "indicative": 370.6248,
       "buy": null,
       "sell": null
     }
   },
   "gold": {
-    "lkr_per_gram_24k": 43520.4,
-    "lkr_per_gram_22k": 39893.7,
+    "lkr_per_gram_24k": 43800.84,
+    "lkr_per_gram_22k": 40150.77,
     "notes": "Indicative rates; jewellery shop rates may vary."
   },
   "debug": {
     "updatedBy": "github-actions",
-    "runAt": "2026-11-08T13:24:28+05:30",
-    "scriptVersion": "v5-api-based-2025-12-30",
-    "fuelError": "HTTPSConnectionPool(host='ceypetco.gov.lk', port=443): Max retries exceeded with url: /marketing-sales/ (Caused by NewConnectionError(\"HTTPSConnection(host='ceypetco.gov.lk', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+    "runAt": "2026-11-09T14:07:06+05:30",
+    "scriptVersion": "v5-api-based-2025-12-30"
   }
 }
